@@ -1,36 +1,26 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth import login, logout
+from .models import Match
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from . import forms
 
-def signup_view(request):
+def match(request):
+    matches = Match.objects.all().order_by('date')
+    return render(request, 'match/match.html', { 'matches': matches })
+
+def match_detail(request, slug):
+    match = Match.objects.get(slug=slug)
+    return render(request, 'match/match_detail.html', { 'match': match })
+
+@login_required(login_url="/accounts/login/")
+def profile_create(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = forms.CreatePost(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save()
-            #log the user in
-            login(request, user)
-            return redirect('match:list')
+            instance = form.save(commit=False)
+            instance.author = request.user
+            instance.save()
+            return redirect("match:list")
     else:
-        form = UserCreationForm
-    return render(request, 'accounts/signup.html',{ 'form':form })
-
-def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            # log in user
-            user = form.get_user()
-            login(request, user)
-            if 'next' in request.POST:
-                return redirect(request.POST.get('next'))
-            else:
-                return redirect('match:list')
-            return redirect('match:list')
-    else:
-        form = AuthenticationForm()
-    return render(request, 'accounts/login.html', { 'form':form })
-
-def logout_view(request):
-    if request.method == 'POST':
-        logout(request)
-        return redirect('match:list')
+        form = forms.CreatePost()
+    return render(request, 'match/profile_create.html', { 'form':form })

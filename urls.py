@@ -1,10 +1,12 @@
 from django.conf.urls import url
+from django.urls import path, include
 from . import views
+from . import models
 
-app_name = 'accounts'
+app_name = 'match'
 
 urlpatterns = [
-    url("signup/", views.signup_view, name="signup"),
-    url("login/", views.login_view, name="login"),
-    url('logout/', views.logout_view, name="logout"),
+    path('', views.match, name="list"),
+    url('create/', views.profile_create, name="create"),
+    path('<slug:slug>/', views.match_detail, name="detail"),
 ]
